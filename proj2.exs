@@ -6,7 +6,6 @@ defmodule Proj2 do
     input = System.argv()
     [numNodes, topology, algorithm] = input
     numNodes = numNodes |> String.to_integer()
-    startTime = System.monotonic_time(:millisecond)
 
     # Rounding of the values to the nearest square and cube
     numNodes =
