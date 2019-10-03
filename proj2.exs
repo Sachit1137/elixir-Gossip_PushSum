@@ -55,7 +55,7 @@ defmodule Proj2 do
   end
 
   def init(:ok) do
-    {:ok, {0, 0, [], 1}}
+    {:ok, {1, 1, [], 1}}
   end
 
   def start_node() do
@@ -67,22 +67,6 @@ defmodule Proj2 do
     GenServer.call(pid, {:UpdatePIDState, nodeID})
   end
 
-  # ---------------------------------PUSH_SUM----------------------------------
 
-  def startPushSum() do
-
-  end
-
-
-  # ---------------------------------GOSSIP----------------------------------
-
-  def startGossip() do
-  end
-
-
-  # ----------------------------------------SETTING NEIGHBOURS------------------------------------
-
-  def set_neighbours() do
-  end
 end
 Proj2.main()
