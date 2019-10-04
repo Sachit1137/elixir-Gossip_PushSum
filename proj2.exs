@@ -6,6 +6,7 @@ defmodule Proj2 do
     input = System.argv()
     [numNodes, topology, algorithm] = input
     numNodes = numNodes |> String.to_integer()
+    startTime = System.monotonic_time(:millisecond)
 
     # Rounding of the values to the nearest square and cube
     numNodes =
@@ -35,18 +36,17 @@ defmodule Proj2 do
       Stream.with_index(allNodes, 1)
       |> Enum.reduce(%{}, fn {pids, nodeID}, acc -> Map.put(acc, nodeID, pids) end)
 
-       # Setting the neighbors according to the chosen topology
-    neighbours = set_neighbours()
-
+    # Setting the neighbors according to the chosen topology
+    neighbours = set_neighbours(allNodes, indexed_actors, numNodes, topology)
 
     cond do
       algorithm == "gossip" ->
         IO.puts("Initiating Gossip Algorithm with #{topology} topology...")
-        startGossip()
+        # startGossip()
 
       algorithm == "push-sum" ->
         IO.puts("Initiating push-sum Algorithm with #{topology} topology...")
-        startPushSum()
+        # startPushSum()
 
       true ->
         IO.puts("Invalid ALgorithm!")
@@ -65,6 +65,32 @@ defmodule Proj2 do
   def updatePIDState(pid, nodeID) do
     GenServer.call(pid, {:UpdatePIDState, nodeID})
   end
+
+  def set_neighbours(actors, indexd_actors, numNodes, topology) do
+    cond do
+      topology == "line" ->
+        Enum.reduce(1..numNodes, %{}, fn x, acc ->
+          neighbors =
+            cond do
+              x == 1 -> [2]
+              x == numNodes -> [numNodes - 1]
+              true -> [x - 1, x + 1]
+            end
+
+          neighbor_pids =
+            Enum.map(neighbors, fn i ->
+              {:ok, n} = Map.fetch(indexd_actors, i)
+              n
+            end)
+
+          {:ok, actor} = Map.fetch(indexd_actors, x)
+          Map.put(acc, actor, neighbor_pids)
+        end)
+        true-> ""
+      end
+    end
+
+
 
 
 end
