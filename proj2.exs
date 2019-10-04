@@ -91,6 +91,32 @@ defmodule Proj2 do
           {:ok, actor} = Map.fetch(indexd_actors, x)
           Map.put(acc, actor, neighbor_pids)
         end)
+        
+        topology == "rand2D" ->
+        initial_map = %{}
+        # creating a map with key = actor pid  and value = list of x and y coordinates
+        actor_with_coordinates =
+          Enum.map(actors, fn x ->
+            Map.put(initial_map, x, [:rand.uniform()] ++ [:rand.uniform()])
+          end)
+
+        Enum.reduce(actor_with_coordinates, %{}, fn x, acc ->
+          [actor_pid] = Map.keys(x)
+          actor_coordinates = Map.values(x)
+
+          list_of_neighbors =
+            ([] ++
+               Enum.map(actor_with_coordinates, fn x ->
+                 if is_connected(actor_coordinates, Map.values(x)) do
+                   Enum.at(Map.keys(x), 0)
+                 end
+               end))
+            |> Enum.filter(&(&1 != nil))
+
+          # one actor should not be its own neighbour
+          updated_neighbors = list_of_neighbors -- [actor_pid]
+          Map.put(acc, actor_pid, updated_neighbors)
+        end)
         true-> ""
       end
     end
