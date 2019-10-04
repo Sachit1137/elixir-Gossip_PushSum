@@ -120,9 +120,25 @@ defmodule Proj2 do
         true-> ""
       end
     end
+    
+  # checks if 2 nodes are within 0.1 distance
+  def is_connected(actor_cordinates, other_cordinates) do
+    actor_cordinates = List.flatten(actor_cordinates)
+    other_cordinates = List.flatten(other_cordinates)
 
+    x1 = Enum.at(actor_cordinates, 0)
+    x2 = Enum.at(other_cordinates, 0)
+    y1 = Enum.at(actor_cordinates, 1)
+    y2 = Enum.at(other_cordinates, 1)
 
+    x_dist = :math.pow(x2 - x1, 2)
+    y_dist = :math.pow(y2 - y1, 2)
+    distance = round(:math.sqrt(x_dist + y_dist))
 
-
+    cond do
+      distance > 1 -> false
+      distance <= 1 -> true
+    end
+  end
 end
 Proj2.main()
