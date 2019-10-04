@@ -117,7 +117,7 @@ defmodule Proj2 do
           updated_neighbors = list_of_neighbors -- [actor_pid]
           Map.put(acc, actor_pid, updated_neighbors)
         end)
-        true-> ""
+        true-> IO.puts("Invalid topology!")
       end
     end
     
