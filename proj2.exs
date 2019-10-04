@@ -42,11 +42,11 @@ defmodule Proj2 do
     cond do
       algorithm == "gossip" ->
         IO.puts("Initiating Gossip Algorithm with #{topology} topology...")
-        # startGossip()
+        startGossip()
 
       algorithm == "push-sum" ->
         IO.puts("Initiating push-sum Algorithm with #{topology} topology...")
-        # startPushSum()
+        startPushSum()
 
       true ->
         IO.puts("Invalid ALgorithm!")
@@ -65,7 +65,12 @@ defmodule Proj2 do
   def updatePIDState(pid, nodeID) do
     GenServer.call(pid, {:UpdatePIDState, nodeID})
   end
-
+  def startPushSum()
+  end
+  
+  def startGossip()
+  end
+  
   def set_neighbours(actors, indexd_actors, numNodes, topology) do
     cond do
       topology == "line" ->
