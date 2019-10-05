@@ -92,6 +92,26 @@ defmodule Proj2 do
           Map.put(acc, actor, neighbor_pids)
         end)
         
+        topology == "full" ->
+        Enum.reduce(1..numNodes, %{}, fn x, acc ->
+          neighbors =
+            cond do
+              x == 1 -> Enum.to_list(2..numNodes)
+              x == numNodes -> Enum.to_list(1..(numNodes - 1))
+              true -> Enum.to_list(1..(x - 1)) ++ Enum.to_list((x + 1)..numNodes)
+            end
+
+          neighbor_pids =
+            Enum.map(neighbors, fn i ->
+              {:ok, n} = Map.fetch(indexd_actors, i)
+              n
+            end)
+
+          {:ok, actor} = Map.fetch(indexd_actors, x)
+          Map.put(acc, actor, neighbor_pids)
+        end)
+
+        
         topology == "rand2D" ->
         initial_map = %{}
         # creating a map with key = actor pid  and value = list of x and y coordinates
