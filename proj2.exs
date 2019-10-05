@@ -111,6 +111,12 @@ defmodule Proj2 do
           Map.put(acc, actor, neighbor_pids)
         end)
 
+        topology == "honeycomb" ->
+        common_honeycomb(numNodes, indexd_actors, topology)
+
+        topology == "randHoneycomb" ->
+        common_honeycomb(numNodes, indexd_actors, topology)
+
         
         topology == "rand2D" ->
         initial_map = %{}
