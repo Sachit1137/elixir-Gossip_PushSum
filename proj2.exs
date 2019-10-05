@@ -166,5 +166,102 @@ defmodule Proj2 do
       distance <= 1 -> true
     end
   end
+  
+  def common_honeycomb(numNodes, indexd_actors, topology) do
+    total_rows = :math.sqrt(numNodes) |> trunc
+
+    Enum.reduce(1..numNodes, %{}, fn x, acc ->
+      neighbors =
+        cond do
+          # first row
+          x <= total_rows ->
+            cond do
+              # last elemnt of first row
+              rem(x, total_rows) == 0 -> [x + total_rows]
+              true -> [x + total_rows, x + total_rows + 1]
+            end
+
+          # last row
+          x > (total_rows - 1) * total_rows ->
+            # first element
+            if x == (total_rows - 1) * total_rows + 1 do
+              [x - total_rows]
+            else
+              if rem(div(x, total_rows), 2) == 0 do
+                if rem(div(x - 1, total_rows), 2) == 1 do
+                  [x - total_rows - 1, x - total_rows]
+                else
+                  [x - total_rows]
+                end
+              else
+                if rem(div(x - 1, total_rows), 2) == 0 do
+                  [x - total_rows]
+                else
+                  [x - total_rows - 1, x - total_rows]
+                end
+              end
+            end
+
+          # middle rows
+          true ->
+            cond do
+              # first element of every middle row
+              x == div(x, total_rows) * total_rows + 1 ->
+                if rem(2 + 4 * (div(x, total_rows) - 1), div(x, total_rows) + 1) == 0 or
+                     rem(3 + 4 * (div(x, total_rows) - 1), div(x, total_rows) + 1) == 0 do
+                  [x - total_rows, x + total_rows]
+                else
+                  [x - total_rows, x - total_rows + 1, x + total_rows]
+                end
+
+              # 2nd row elements
+              x > total_rows and x <= 2 * total_rows ->
+                [x - total_rows - 1, x - total_rows, x + total_rows]
+
+              # last element of every middle row
+              rem(x, total_rows) == 0 ->
+                if rem(div(x - 1, total_rows) + 1, 2) == 1 do
+                  [x + total_rows - 1, x - total_rows, x + total_rows]
+                else
+                  [x - total_rows, x + total_rows]
+                end
+
+              # rows 3,5,7,9...
+              rem(div(x, total_rows) + 1, 2) == 1 ->
+                [x + total_rows - 1, x - total_rows, x + total_rows]
+
+              # rows 4,6,8..
+              true ->
+                [x - total_rows + 1, x - total_rows, x + total_rows]
+            end
+        end
+
+      if topology == "randHoneycomb" do
+        # Generating a new Random Neighbor
+        # Filtering the list so the Node should not generate itself or its previous as the Random neighbor
+        newListNeighbor = neighbors ++ [x]
+        numNodesNewList = Enum.filter(1..numNodes, fn y -> !Enum.member?(newListNeighbor, y) end)
+
+        neighbor_pids =
+          Enum.map(neighbors ++ [Enum.random(numNodesNewList)], fn i ->
+            {:ok, n} = Map.fetch(indexd_actors, i)
+            n
+          end)
+
+        {:ok, actor} = Map.fetch(indexd_actors, x)
+        Map.put(acc, actor, neighbor_pids)
+      else
+        neighbor_pids =
+          Enum.map(neighbors, fn i ->
+            {:ok, n} = Map.fetch(indexd_actors, i)
+            n
+          end)
+
+        {:ok, actor} = Map.fetch(indexd_actors, x)
+        Map.put(acc, actor, neighbor_pids)
+      end
+    end)
+  end
+
 end
 Proj2.main()
