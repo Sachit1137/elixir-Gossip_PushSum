@@ -19,8 +19,7 @@ defmodule Proj2 do
           row_count = :math.sqrt(numNodes) |> ceil
           row_count * row_count
 
-        true ->
-          numNodes
+        
       end
 
     # Associating all nodes with their PID's
