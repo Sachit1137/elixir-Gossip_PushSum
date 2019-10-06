@@ -101,9 +101,10 @@ defmodule Proj2 do
       IO.puts("Convergence achieved in #{timeTaken} Milliseconds")
     end
   end
+    # ---------------------------------GOSSIP----------------------------------
+
   
-  
-  def startGossip()
+  def startGossip(allnodes, neighbours)
   end
   
   def set_neighbours(actors, indexd_actors, numNodes, topology) do
