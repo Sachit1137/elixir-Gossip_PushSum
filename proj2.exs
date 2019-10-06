@@ -41,11 +41,11 @@ defmodule Proj2 do
     cond do
       algorithm == "gossip" ->
         IO.puts("Initiating Gossip Algorithm with #{topology} topology...")
-        startGossip()
+        startGossip(allNodes, neighbours)
 
       algorithm == "push-sum" ->
         IO.puts("Initiating push-sum Algorithm with #{topology} topology...")
-        startPushSum()
+        startPushSum(allNodes, startTime, indexed_actors, neighbours)
 
       true ->
         IO.puts("Invalid ALgorithm!")
