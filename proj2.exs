@@ -116,6 +116,341 @@ defmodule Proj2 do
         topology == "randHoneycomb" ->
         common_honeycomb(numNodes, indexd_actors, topology)
 
+        topology == "torus" ->
+        rowCount = :math.pow(numNodes, 1 / 3) |> ceil
+
+        # Creating a map for indexing all Torus nodes
+        tupleList =
+          Enum.map(1..rowCount, fn x ->
+            Enum.map(1..rowCount, fn y -> Enum.map(1..rowCount, fn z -> {x, y, z} end) end)
+          end)
+          |> List.flatten()
+
+        # Associating the map indexed values with the Nodes
+        torusMap =
+          Stream.with_index(tupleList, 1)
+          |> Enum.reduce(%{}, fn {tupleValue, nodes}, acc -> Map.put(acc, tupleValue, nodes) end)
+
+        # Forming a key value pair of Nodes and the index
+        torusMapNew =
+          Stream.with_index(tupleList, 1)
+          |> Enum.reduce(%{}, fn {nodes, tupleValue}, acc -> Map.put(acc, tupleValue, nodes) end)
+
+        Enum.reduce(1..numNodes, %{}, fn x, acc ->
+          # Assigning the current node to the map
+          {a, b, c} = Map.fetch!(torusMapNew, x)
+
+          # Calculating the neighbors
+          neighbors =
+            cond do
+              a == 1 ->
+                cond do
+                  b == 1 && c == 1 ->
+                    _neighborList = [
+                      Map.fetch!(torusMap, {a + 1, b, c}),
+                      Map.fetch!(torusMap, {a, b + 1, c}),
+                      Map.fetch!(torusMap, {a, b, c + 1}),
+                      Map.fetch!(torusMap, {a, b, c + rowCount - 1}),
+                      Map.fetch!(torusMap, {a, b + rowCount - 1, c}),
+                      Map.fetch!(torusMap, {a + rowCount - 1, b, c})
+                    ]
+
+                  b == 1 && (c > 1 && c < rowCount) ->
+                    _neighborList = [
+                      Map.fetch!(torusMap, {a, b, c - 1}),
+                      Map.fetch!(torusMap, {a, b, c + 1}),
+                      Map.fetch!(torusMap, {a, b + 1, c}),
+                      Map.fetch!(torusMap, {a + 1, b, c}),
+                      Map.fetch!(torusMap, {a, b + rowCount - 1, c}),
+                      Map.fetch!(torusMap, {a + rowCount - 1, b, c})
+                    ]
+
+                  b == 1 && c == rowCount ->
+                    _neighborList = [
+                      Map.fetch!(torusMap, {a, b, c - rowCount + 1}),
+                      Map.fetch!(torusMap, {a, b, c - 1}),
+                      Map.fetch!(torusMap, {a, b + 1, c}),
+                      Map.fetch!(torusMap, {a + 1, b, c}),
+                      Map.fetch!(torusMap, {a, b + rowCount - 1, c}),
+                      Map.fetch!(torusMap, {a + rowCount - 1, b, c})
+                    ]
+
+                  b > 1 && b < rowCount && c == 1 ->
+                    _neighborList = [
+                      Map.fetch!(torusMap, {a, b - 1, c}),
+                      Map.fetch!(torusMap, {a, b + 1, c}),
+                      Map.fetch!(torusMap, {a, b, c + 1}),
+                      Map.fetch!(torusMap, {a + 1, b, c}),
+                      Map.fetch!(torusMap, {a, b, c + rowCount - 1}),
+                      Map.fetch!(torusMap, {a + rowCount - 1, b, c})
+                    ]
+
+                  b > 1 && b < rowCount && c == rowCount ->
+                    _neighborList = [
+                      Map.fetch!(torusMap, {a, b - 1, c}),
+                      Map.fetch!(torusMap, {a, b + 1, c}),
+                      Map.fetch!(torusMap, {a, b, c - 1}),
+                      Map.fetch!(torusMap, {a + 1, b, c}),
+                      Map.fetch!(torusMap, {a, b, c - rowCount + 1}),
+                      Map.fetch!(torusMap, {a + rowCount - 1, b, c})
+                    ]
+
+                  b == rowCount && c == 1 ->
+                    _neighborList = [
+                      Map.fetch!(torusMap, {a, b - 1, c}),
+                      Map.fetch!(torusMap, {a, b, c + 1}),
+                      Map.fetch!(torusMap, {a + 1, b, c}),
+                      Map.fetch!(torusMap, {a, b - rowCount + 1, c}),
+                      Map.fetch!(torusMap, {a, b, c + rowCount - 1}),
+                      Map.fetch!(torusMap, {a + rowCount - 1, b, c})
+                    ]
+
+                  b == rowCount && c > 1 && c < rowCount ->
+                    _neighborList = [
+                      Map.fetch!(torusMap, {a, b, c + 1}),
+                      Map.fetch!(torusMap, {a, b, c - 1}),
+                      Map.fetch!(torusMap, {a, b - rowCount + 1, c}),
+                      Map.fetch!(torusMap, {a + rowCount - 1, b, c}),
+                      Map.fetch!(torusMap, {a, b - 1, c}),
+                      Map.fetch!(torusMap, {a + 1, b, c})
+                    ]
+
+                  b == rowCount && c == rowCount ->
+                    _neighborList = [
+                      Map.fetch!(torusMap, {a + 1, b, c}),
+                      Map.fetch!(torusMap, {a, b - 1, c}),
+                      Map.fetch!(torusMap, {a, b, c - 1}),
+                      Map.fetch!(torusMap, {a + rowCount - 1, b, c}),
+                      Map.fetch!(torusMap, {a, b - rowCount + 1, c}),
+                      Map.fetch!(torusMap, {a, b, c - rowCount + 1})
+                    ]
+
+                  b > 1 && b < rowCount && c > 1 && c < rowCount ->
+                    _neighborList = [
+                      Map.fetch!(torusMap, {a, b + 1, c}),
+                      Map.fetch!(torusMap, {a, b - 1, c}),
+                      Map.fetch!(torusMap, {a, b, c + 1}),
+                      Map.fetch!(torusMap, {a, b, c - 1}),
+                      Map.fetch!(torusMap, {a + 1, b, c}),
+                      Map.fetch!(torusMap, {a + rowCount - 1, b, c})
+                    ]
+
+                  true ->
+                    []
+                end
+
+              a == rowCount ->
+                cond do
+                  b == 1 && c == 1 ->
+                    _neighborList = [
+                      Map.fetch!(torusMap, {a - 1, b, c}),
+                      Map.fetch!(torusMap, {a, b, c + 1}),
+                      Map.fetch!(torusMap, {a, b + 1, c}),
+                      Map.fetch!(torusMap, {a - rowCount + 1, b, c}),
+                      Map.fetch!(torusMap, {a, b + rowCount - 1, c}),
+                      Map.fetch!(torusMap, {a, b, c + rowCount - 1})
+                    ]
+
+                  b == 1 && (c > 1 && c < rowCount) ->
+                    _neighborList = [
+                      Map.fetch!(torusMap, {a, b, c + 1}),
+                      Map.fetch!(torusMap, {a, b, c - 1}),
+                      Map.fetch!(torusMap, {a - 1, b, c}),
+                      Map.fetch!(torusMap, {a, b + 1, c}),
+                      Map.fetch!(torusMap, {a - rowCount + 1, b, c}),
+                      Map.fetch!(torusMap, {a, b + rowCount - 1, c})
+                    ]
+
+                  b == 1 && c == rowCount ->
+                    _neighborList = [
+                      Map.fetch!(torusMap, {a - 1, b, c}),
+                      Map.fetch!(torusMap, {a, b + 1, c}),
+                      Map.fetch!(torusMap, {a, b, c - 1}),
+                      Map.fetch!(torusMap, {a, b, c - rowCount + 1}),
+                      Map.fetch!(torusMap, {a, b + rowCount - 1, c}),
+                      Map.fetch!(torusMap, {a - rowCount + 1, b, c})
+                    ]
+
+                  b > 1 && b < rowCount && c == 1 ->
+                    _neighborList = [
+                      Map.fetch!(torusMap, {a, b + 1, c}),
+                      Map.fetch!(torusMap, {a, b - 1, c}),
+                      Map.fetch!(torusMap, {a, b, c + 1}),
+                      Map.fetch!(torusMap, {a - 1, b, c}),
+                      Map.fetch!(torusMap, {a - rowCount + 1, b, c}),
+                      Map.fetch!(torusMap, {a, b, c + rowCount - 1})
+                    ]
+
+                  b > 1 && b < rowCount && c == rowCount ->
+                    _neighborList = [
+                      Map.fetch!(torusMap, {a, b + 1, c}),
+                      Map.fetch!(torusMap, {a, b - 1, c}),
+                      Map.fetch!(torusMap, {a, b, c - 1}),
+                      Map.fetch!(torusMap, {a - 1, b, c}),
+                      Map.fetch!(torusMap, {a - rowCount + 1, b, c}),
+                      Map.fetch!(torusMap, {a, b, c - rowCount + 1})
+                    ]
+
+                  b == rowCount && c == 1 ->
+                    _neighborList = [
+                      Map.fetch!(torusMap, {a - 1, b, c}),
+                      Map.fetch!(torusMap, {a, b - 1, c}),
+                      Map.fetch!(torusMap, {a, b, c + 1}),
+                      Map.fetch!(torusMap, {a, b - rowCount + 1, c}),
+                      Map.fetch!(torusMap, {a, b, c + rowCount - 1}),
+                      Map.fetch!(torusMap, {a - rowCount + 1, b, c})
+                    ]
+
+                  b == rowCount && c > 1 && c < rowCount ->
+                    _neighborList = [
+                      Map.fetch!(torusMap, {a, b, c - 1}),
+                      Map.fetch!(torusMap, {a, b, c + 1}),
+                      Map.fetch!(torusMap, {a, b - 1, c}),
+                      Map.fetch!(torusMap, {a - 1, b, c}),
+                      Map.fetch!(torusMap, {a - rowCount + 1, b, c}),
+                      Map.fetch!(torusMap, {a, b - rowCount + 1, c})
+                    ]
+
+                  b == rowCount && c == rowCount ->
+                    _neighborList = [
+                      Map.fetch!(torusMap, {a - 1, b, c}),
+                      Map.fetch!(torusMap, {a, b - 1, c}),
+                      Map.fetch!(torusMap, {a, b, c - 1}),
+                      Map.fetch!(torusMap, {a, b, c - rowCount + 1}),
+                      Map.fetch!(torusMap, {a, b - rowCount + 1, c}),
+                      Map.fetch!(torusMap, {a - rowCount + 1, b, c})
+                    ]
+
+                  b > 1 && b < rowCount && c > 1 && c < rowCount ->
+                    _neighborList = [
+                      Map.fetch!(torusMap, {a, b + 1, c}),
+                      Map.fetch!(torusMap, {a, b - 1, c}),
+                      Map.fetch!(torusMap, {a, b, c + 1}),
+                      Map.fetch!(torusMap, {a, b, c - 1}),
+                      Map.fetch!(torusMap, {a - 1, b, c}),
+                      Map.fetch!(torusMap, {a - rowCount + 1, b, c})
+                    ]
+
+                  true ->
+                    []
+                end
+
+              b == 1 && a > 1 && a < rowCount ->
+                cond do
+                  c == 1 ->
+                    _neighborList = [
+                      Map.fetch!(torusMap, {a - 1, b, c}),
+                      Map.fetch!(torusMap, {a + 1, b, c}),
+                      Map.fetch!(torusMap, {a, b + 1, c}),
+                      Map.fetch!(torusMap, {a, b, c + 1}),
+                      Map.fetch!(torusMap, {a, b + rowCount - 1, c}),
+                      Map.fetch!(torusMap, {a, b, c + rowCount - 1})
+                    ]
+
+                  c == rowCount ->
+                    _neighborList = [
+                      Map.fetch!(torusMap, {a - 1, b, c}),
+                      Map.fetch!(torusMap, {a + 1, b, c}),
+                      Map.fetch!(torusMap, {a, b + 1, c}),
+                      Map.fetch!(torusMap, {a, b, c - 1}),
+                      Map.fetch!(torusMap, {a, b, c - rowCount + 1}),
+                      Map.fetch!(torusMap, {a, b + rowCount - 1, c})
+                    ]
+
+                  c > 1 && c < rowCount ->
+                    _neighborList = [
+                      Map.fetch!(torusMap, {a - 1, b, c}),
+                      Map.fetch!(torusMap, {a + 1, b, c}),
+                      Map.fetch!(torusMap, {a, b, c - 1}),
+                      Map.fetch!(torusMap, {a, b, c + 1}),
+                      Map.fetch!(torusMap, {a, b + 1, c}),
+                      Map.fetch!(torusMap, {a, b + rowCount - 1, c})
+                    ]
+
+                  true ->
+                    []
+                end
+
+              b == rowCount && a > 1 && a < rowCount ->
+                cond do
+                  c == 1 ->
+                    _neighborList = [
+                      Map.fetch!(torusMap, {a + 1, b, c}),
+                      Map.fetch!(torusMap, {a - 1, b, c}),
+                      Map.fetch!(torusMap, {a, b - 1, c}),
+                      Map.fetch!(torusMap, {a, b, c + 1}),
+                      Map.fetch!(torusMap, {a, b, c + rowCount - 1}),
+                      Map.fetch!(torusMap, {a, b - rowCount + 1, c})
+                    ]
+
+                  c == rowCount ->
+                    _neighborList = [
+                      Map.fetch!(torusMap, {a + 1, b, c}),
+                      Map.fetch!(torusMap, {a - 1, b, c}),
+                      Map.fetch!(torusMap, {a, b - 1, c}),
+                      Map.fetch!(torusMap, {a, b, c - 1}),
+                      Map.fetch!(torusMap, {a, b, c - rowCount + 1}),
+                      Map.fetch!(torusMap, {a, b - rowCount + 1, c})
+                    ]
+
+                  c > 1 && c < rowCount ->
+                    _neighborList = [
+                      Map.fetch!(torusMap, {a + 1, b, c}),
+                      Map.fetch!(torusMap, {a - 1, b, c}),
+                      Map.fetch!(torusMap, {a, b, c + 1}),
+                      Map.fetch!(torusMap, {a, b, c - 1}),
+                      Map.fetch!(torusMap, {a, b - 1, c}),
+                      Map.fetch!(torusMap, {a, b - rowCount + 1, c})
+                    ]
+
+                  true ->
+                    []
+                end
+
+              a > 1 && a < rowCount && b > 1 && b < rowCount && c == 1 ->
+                _neighborList = [
+                  Map.fetch!(torusMap, {a + 1, b, c}),
+                  Map.fetch!(torusMap, {a - 1, b, c}),
+                  Map.fetch!(torusMap, {a, b + 1, c}),
+                  Map.fetch!(torusMap, {a, b - 1, c}),
+                  Map.fetch!(torusMap, {a, b, c + 1}),
+                  Map.fetch!(torusMap, {a, b, c + rowCount - 1})
+                ]
+
+              a > 1 && a < rowCount && b > 1 && b < rowCount && c == rowCount ->
+                _neighborList = [
+                  Map.fetch!(torusMap, {a + 1, b, c}),
+                  Map.fetch!(torusMap, {a - 1, b, c}),
+                  Map.fetch!(torusMap, {a, b + 1, c}),
+                  Map.fetch!(torusMap, {a, b - 1, c}),
+                  Map.fetch!(torusMap, {a, b, c - 1}),
+                  Map.fetch!(torusMap, {a, b, c - rowCount + 1})
+                ]
+
+              a > 1 && a < rowCount && (b > 1 && b < rowCount) && (c > 1 && c < rowCount) ->
+                _neighborList = [
+                  Map.fetch!(torusMap, {a - 1, b, c}),
+                  Map.fetch!(torusMap, {a + 1, b, c}),
+                  Map.fetch!(torusMap, {a, b - 1, c}),
+                  Map.fetch!(torusMap, {a, b + 1, c}),
+                  Map.fetch!(torusMap, {a, b, c + 1}),
+                  Map.fetch!(torusMap, {a, b, c - 1})
+                ]
+
+              true ->
+                []
+            end
+
+          neighbor_pids =
+            Enum.map(neighbors, fn i ->
+              {:ok, n} = Map.fetch(indexd_actors, i)
+              n
+            end)
+
+          {:ok, actor} = Map.fetch(indexd_actors, x)
+          Map.put(acc, actor, neighbor_pids)
+        end)
+
         
         topology == "rand2D" ->
         initial_map = %{}
