@@ -46,6 +46,7 @@ defmodule Proj2 do
       algorithm == "push-sum" ->
         IO.puts("Initiating push-sum Algorithm with #{topology} topology...")
         startPushSum(allNodes, startTime, indexed_actors, neighbours)
+        wait_till_converged_pushsum(allNodes, startTime)
 
       true ->
         IO.puts("Invalid ALgorithm!")
