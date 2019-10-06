@@ -64,7 +64,24 @@ defmodule Proj2 do
   def updatePIDState(pid, nodeID) do
     GenServer.call(pid, {:UpdatePIDState, nodeID})
   end
-  def startPushSum()
+ # ---------------------------------PUSH_SUM----------------------------------
+
+  def startPushSum(allNodes, startTime, indexed_actors, neighbours_map) do
+    chosenFirstNode = Enum.random(allNodes)
+    neighbourList = Map.fetch!(neighbours_map, chosenFirstNode)
+    IO.puts("Executing...")
+
+    GenServer.cast(
+      chosenFirstNode,
+      {:ReceivePushSum, 0, 0, startTime, indexed_actors, neighbourList, neighbours_map}
+    )
+  end
+
+  def sendPushSum(randomNode, myS, myW, startTime, indexed_actors, neighbours, neighbours_map) do
+    GenServer.cast(
+      randomNode,
+      {:ReceivePushSum, myS, myW, startTime, indexed_actors, neighbours, neighbours_map}
+    )
   end
   
   def startGossip()
