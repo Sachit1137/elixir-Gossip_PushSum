@@ -84,6 +84,25 @@ defmodule Proj2 do
     )
   end
   
+  # Check if the nodes have converged
+  def wait_till_converged_pushsum(allNodes, startTime) do
+    pscounts =
+      Enum.map(allNodes, fn pid ->
+        state = GenServer.call(pid, :get_state)
+        {_, pscount, _, _} = state
+        pscount
+      end)
+
+    if length(Enum.filter(pscounts, fn x -> x == 2 end)) < (0.9 * length(allNodes)) |> trunc do
+      wait_till_converged_gossip(allNodes, startTime)
+    else
+      endTime = System.monotonic_time(:millisecond)
+      timeTaken = endTime - startTime
+      IO.puts("Convergence achieved in #{timeTaken} Milliseconds")
+    end
+  end
+  
+  
   def startGossip()
   end
   
