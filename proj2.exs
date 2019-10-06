@@ -261,6 +261,14 @@ defmodule Proj2 do
       end
     end)
   end
+  
+   # Handle call for associating specific Node with PID
+  def handle_call({:UpdatePIDState, nodeID}, _from, state) do
+    {a, b, c, d} = state
+    state = {nodeID, b, c, d}
+    {:reply, a, state}
+  end
+
 
 end
 Proj2.main()
