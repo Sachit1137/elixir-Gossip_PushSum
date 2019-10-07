@@ -105,7 +105,22 @@ defmodule Proj2 do
     # ---------------------------------GOSSIP----------------------------------
 
   
-  def startGossip(allnodes, neighbours)
+ def startGossip(allnodes, neighbours) do
+    firstNode = Enum.random(allnodes)
+    neighborsList = Map.fetch!(neighbours, firstNode)
+    chooseRandomNeighbor = Enum.random(neighborsList)
+    neighborsList = Map.fetch!(neighbours, chooseRandomNeighbor)
+    IO.puts("Executing...")
+
+    GenServer.cast(chooseRandomNeighbor, {:sendGossip, neighbours, neighborsList})
+  end
+
+  def receiveGossip(neighbours, neighborsList) do
+    newNode = Enum.random(neighborsList)
+    neighborsList = Map.fetch!(neighbours, newNode)
+    GenServer.cast(newNode, {:sendGossip, neighbours, neighborsList})
+    Process.sleep(1)
+    GenServer.cast(self(), {:sendGossip, neighbours, neighborsList})
   end
   
   def set_neighbours(actors, indexd_actors, numNodes, topology) do
