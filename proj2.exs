@@ -123,6 +123,26 @@ defmodule Proj2 do
     GenServer.cast(self(), {:sendGossip, neighbours, neighborsList})
   end
   
+   # Check if the nodes have converged
+  def wait_till_converged_gossip(allNodes, startTime) do
+    counters =
+      Enum.map(allNodes, fn pid ->
+        state = GenServer.call(pid, :getStateGossip)
+        {_, counter, _, _} = state
+        counter
+      end)
+
+    if length(Enum.filter(counters, fn x -> x >= 1 end)) < (0.9 * length(allNodes)) |> trunc do
+      wait_till_converged_gossip(allNodes, startTime)
+    else
+      endTime = System.monotonic_time(:millisecond)
+      timeTaken = endTime - startTime
+      IO.puts("Convergence achieved in #{timeTaken} Milliseconds")
+    end
+  end
+
+  # ----------------------------------------SETTING NEIGHBOURS------------------------------------
+  
   def set_neighbours(actors, indexd_actors, numNodes, topology) do
     cond do
       topology == "line" ->
