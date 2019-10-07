@@ -677,6 +677,15 @@ defmodule Proj2 do
     state = {nodeID, b, c, d}
     {:reply, a, state}
   end
+  
+   # Handle calls for Gossip and PushSum
+  def handle_call(:getStateGossip, _from, state) do
+    {:reply, state, state}
+  end
+
+  def handle_call(:get_state, _from, state) do
+    {:reply, state, state}
+  end
 
 
 end
