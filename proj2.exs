@@ -42,6 +42,7 @@ defmodule Proj2 do
       algorithm == "gossip" ->
         IO.puts("Initiating Gossip Algorithm with #{topology} topology...")
         startGossip(allNodes, neighbours)
+        wait_till_converged_gossip(allNodes, startTime)
 
       algorithm == "push-sum" ->
         IO.puts("Initiating push-sum Algorithm with #{topology} topology...")
