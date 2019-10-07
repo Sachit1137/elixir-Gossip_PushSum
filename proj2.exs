@@ -18,8 +18,9 @@ defmodule Proj2 do
         topology == "honeycomb" || topology == "randHoneycomb" || topology == "rand2D" ->
           row_count = :math.sqrt(numNodes) |> ceil
           row_count * row_count
-         
-         true -> numNodes       
+
+        true ->
+          numNodes
       end
 
     # Associating all nodes with their PID's
@@ -55,7 +56,7 @@ defmodule Proj2 do
   end
 
   def init(:ok) do
-    {:ok, {1, 1, [], 1}}
+    {:ok, {0, 0, [], 1}}
   end
 
   def start_node() do
@@ -66,7 +67,8 @@ defmodule Proj2 do
   def updatePIDState(pid, nodeID) do
     GenServer.call(pid, {:UpdatePIDState, nodeID})
   end
- # ---------------------------------PUSH_SUM----------------------------------
+
+  # ---------------------------------PUSH_SUM----------------------------------
 
   def startPushSum(allNodes, startTime, indexed_actors, neighbours_map) do
     chosenFirstNode = Enum.random(allNodes)
@@ -85,7 +87,7 @@ defmodule Proj2 do
       {:ReceivePushSum, myS, myW, startTime, indexed_actors, neighbours, neighbours_map}
     )
   end
-  
+
   # Check if the nodes have converged
   def wait_till_converged_pushsum(allNodes, startTime) do
     pscounts =
@@ -103,10 +105,10 @@ defmodule Proj2 do
       IO.puts("Convergence achieved in #{timeTaken} Milliseconds")
     end
   end
-    # ---------------------------------GOSSIP----------------------------------
 
-  
- def startGossip(allnodes, neighbours) do
+  # ---------------------------------GOSSIP----------------------------------
+
+  def startGossip(allnodes, neighbours) do
     firstNode = Enum.random(allnodes)
     neighborsList = Map.fetch!(neighbours, firstNode)
     chooseRandomNeighbor = Enum.random(neighborsList)
@@ -123,8 +125,8 @@ defmodule Proj2 do
     Process.sleep(1)
     GenServer.cast(self(), {:sendGossip, neighbours, neighborsList})
   end
-  
-   # Check if the nodes have converged
+
+  # Check if the nodes have converged
   def wait_till_converged_gossip(allNodes, startTime) do
     counters =
       Enum.map(allNodes, fn pid ->
@@ -143,7 +145,7 @@ defmodule Proj2 do
   end
 
   # ----------------------------------------SETTING NEIGHBOURS------------------------------------
-  
+
   def set_neighbours(actors, indexd_actors, numNodes, topology) do
     cond do
       topology == "line" ->
@@ -164,33 +166,34 @@ defmodule Proj2 do
           {:ok, actor} = Map.fetch(indexd_actors, x)
           Map.put(acc, actor, neighbor_pids)
         end)
-        
-        topology == "full" ->
-        Enum.reduce(1..numNodes, %{}, fn x, acc ->
-          neighbors =
-            cond do
-              x == 1 -> Enum.to_list(2..numNodes)
-              x == numNodes -> Enum.to_list(1..(numNodes - 1))
-              true -> Enum.to_list(1..(x - 1)) ++ Enum.to_list((x + 1)..numNodes)
-            end
 
-          neighbor_pids =
-            Enum.map(neighbors, fn i ->
-              {:ok, n} = Map.fetch(indexd_actors, i)
-              n
-            end)
+      topology == "rand2D" ->
+        initial_map = %{}
+        # creating a map with key = actor pid  and value = list of x and y coordinates
+        actor_with_coordinates =
+          Enum.map(actors, fn x ->
+            Map.put(initial_map, x, [:rand.uniform()] ++ [:rand.uniform()])
+          end)
 
-          {:ok, actor} = Map.fetch(indexd_actors, x)
-          Map.put(acc, actor, neighbor_pids)
+        Enum.reduce(actor_with_coordinates, %{}, fn x, acc ->
+          [actor_pid] = Map.keys(x)
+          actor_coordinates = Map.values(x)
+
+          list_of_neighbors =
+            ([] ++
+               Enum.map(actor_with_coordinates, fn x ->
+                 if is_connected(actor_coordinates, Map.values(x)) do
+                   Enum.at(Map.keys(x), 0)
+                 end
+               end))
+            |> Enum.filter(&(&1 != nil))
+
+          # one actor should not be its own neighbour
+          updated_neighbors = list_of_neighbors -- [actor_pid]
+          Map.put(acc, actor_pid, updated_neighbors)
         end)
 
-        topology == "honeycomb" ->
-        common_honeycomb(numNodes, indexd_actors, topology)
-
-        topology == "randHoneycomb" ->
-        common_honeycomb(numNodes, indexd_actors, topology)
-
-        topology == "torus" ->
+      topology == "torus" ->
         rowCount = :math.pow(numNodes, 1 / 3) |> ceil
 
         # Creating a map for indexing all Torus nodes
@@ -525,56 +528,36 @@ defmodule Proj2 do
           Map.put(acc, actor, neighbor_pids)
         end)
 
-        
-        topology == "rand2D" ->
-        initial_map = %{}
-        # creating a map with key = actor pid  and value = list of x and y coordinates
-        actor_with_coordinates =
-          Enum.map(actors, fn x ->
-            Map.put(initial_map, x, [:rand.uniform()] ++ [:rand.uniform()])
-          end)
+      topology == "full" ->
+        Enum.reduce(1..numNodes, %{}, fn x, acc ->
+          neighbors =
+            cond do
+              x == 1 -> Enum.to_list(2..numNodes)
+              x == numNodes -> Enum.to_list(1..(numNodes - 1))
+              true -> Enum.to_list(1..(x - 1)) ++ Enum.to_list((x + 1)..numNodes)
+            end
 
-        Enum.reduce(actor_with_coordinates, %{}, fn x, acc ->
-          [actor_pid] = Map.keys(x)
-          actor_coordinates = Map.values(x)
+          neighbor_pids =
+            Enum.map(neighbors, fn i ->
+              {:ok, n} = Map.fetch(indexd_actors, i)
+              n
+            end)
 
-          list_of_neighbors =
-            ([] ++
-               Enum.map(actor_with_coordinates, fn x ->
-                 if is_connected(actor_coordinates, Map.values(x)) do
-                   Enum.at(Map.keys(x), 0)
-                 end
-               end))
-            |> Enum.filter(&(&1 != nil))
-
-          # one actor should not be its own neighbour
-          updated_neighbors = list_of_neighbors -- [actor_pid]
-          Map.put(acc, actor_pid, updated_neighbors)
+          {:ok, actor} = Map.fetch(indexd_actors, x)
+          Map.put(acc, actor, neighbor_pids)
         end)
-        true-> IO.puts("Invalid topology!")
-      end
-    end
-    
-  # checks if 2 nodes are within 0.1 distance
-  def is_connected(actor_cordinates, other_cordinates) do
-    actor_cordinates = List.flatten(actor_cordinates)
-    other_cordinates = List.flatten(other_cordinates)
 
-    x1 = Enum.at(actor_cordinates, 0)
-    x2 = Enum.at(other_cordinates, 0)
-    y1 = Enum.at(actor_cordinates, 1)
-    y2 = Enum.at(other_cordinates, 1)
+      topology == "honeycomb" ->
+        common_honeycomb(numNodes, indexd_actors, topology)
 
-    x_dist = :math.pow(x2 - x1, 2)
-    y_dist = :math.pow(y2 - y1, 2)
-    distance = round(:math.sqrt(x_dist + y_dist))
+      topology == "randHoneycomb" ->
+        common_honeycomb(numNodes, indexd_actors, topology)
 
-    cond do
-      distance > 1 -> false
-      distance <= 1 -> true
+      true ->
+        IO.puts("Invalid topology!")
     end
   end
-  
+
   def common_honeycomb(numNodes, indexd_actors, topology) do
     total_rows = :math.sqrt(numNodes) |> trunc
 
@@ -670,15 +653,81 @@ defmodule Proj2 do
       end
     end)
   end
-  
-   # Handle call for associating specific Node with PID
+
+  # checks if 2 nodes are within 0.1 distance
+  def is_connected(actor_cordinates, other_cordinates) do
+    actor_cordinates = List.flatten(actor_cordinates)
+    other_cordinates = List.flatten(other_cordinates)
+
+    x1 = Enum.at(actor_cordinates, 0)
+    x2 = Enum.at(other_cordinates, 0)
+    y1 = Enum.at(actor_cordinates, 1)
+    y2 = Enum.at(other_cordinates, 1)
+
+    x_dist = :math.pow(x2 - x1, 2)
+    y_dist = :math.pow(y2 - y1, 2)
+    distance = round(:math.sqrt(x_dist + y_dist))
+
+    cond do
+      distance > 1 -> false
+      distance <= 1 -> true
+    end
+  end
+
+  # Handle Cast methods for PushSum and Gossip
+  def handle_cast(
+        {:ReceivePushSum, incomingS, incomingW, startTime, indexed_actors, neighbours,
+         neighbours_map},
+        state
+      ) do
+    {s, pscount, _adjList, w} = state
+    myS = s + incomingS
+    myW = w + incomingW
+    difference = abs(myS / myW - s / w)
+
+    randomNode = Enum.random(neighbours)
+    neighbours = Map.fetch!(neighbours_map, randomNode)
+
+    state =
+      if(difference < :math.pow(10, -10)) do
+        {myS / 2, pscount + 1, neighbours, myW / 2}
+      else
+        {myS / 2, 0, neighbours, myW / 2}
+      end
+
+    sendPushSum(
+      randomNode,
+      myS / 2,
+      myW / 2,
+      startTime,
+      indexed_actors,
+      neighbours,
+      neighbours_map
+    )
+
+    {:noreply, state}
+  end
+
+  def handle_cast({:sendGossip, neighbours, neighborsList}, state) do
+    {nodeID, counter, _list, w} = state
+    state = {nodeID, counter + 1, neighborsList, w}
+    {_nodeID, counter, _list, _w} = state
+
+    if counter < 10 do
+      receiveGossip(neighbours, neighborsList)
+    end
+
+    {:noreply, state}
+  end
+
+  # Handle call for associating specific Node with PID
   def handle_call({:UpdatePIDState, nodeID}, _from, state) do
     {a, b, c, d} = state
     state = {nodeID, b, c, d}
     {:reply, a, state}
   end
-  
-   # Handle calls for Gossip and PushSum
+
+  # Handle calls for Gossip and PushSum
   def handle_call(:getStateGossip, _from, state) do
     {:reply, state, state}
   end
@@ -686,7 +735,6 @@ defmodule Proj2 do
   def handle_call(:get_state, _from, state) do
     {:reply, state, state}
   end
-
-
 end
+
 Proj2.main()
