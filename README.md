@@ -1,3 +1,5 @@
+GOSSIP AND PUSHSUM ALGORITHMS - COP5615: Fall 2019
+
 Steps to run the program:-
 
 1. Download the file and unzip it
